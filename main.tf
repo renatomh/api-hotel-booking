@@ -169,8 +169,94 @@ resource "aws_cognito_user" "admin_user" {
 }
 
 # Defining admin user group
-resource "aws_cognito_user_in_group" "user_adming_group" {
+resource "aws_cognito_user_in_group" "user_admin_group" {
   user_pool_id = aws_cognito_user_pool.hotel_booking_users.id
   group_name   = aws_cognito_user_group.admin_group.name
   username     = aws_cognito_user.admin_user.username
+}
+
+# API Gateway for creating new hotels
+resource "aws_api_gateway_rest_api" "new_hotel_api" {
+  name        = "NewHotel"
+  description = "REST API for creating a mew hotel"
+  endpoint_configuration {
+    types = ["REGIONAL"]
+  }
+}
+
+resource "aws_api_gateway_method" "post_method" {
+  rest_api_id   = aws_api_gateway_rest_api.new_hotel_api.id
+  resource_id   = aws_api_gateway_rest_api.new_hotel_api.root_resource_id
+  http_method   = "POST"
+  authorization = "NONE"
+}
+
+resource "aws_api_gateway_integration" "post_method" {
+  rest_api_id             = aws_api_gateway_rest_api.new_hotel_api.id
+  resource_id             = aws_api_gateway_rest_api.new_hotel_api.root_resource_id
+  http_method             = aws_api_gateway_method.post_method.http_method
+  integration_http_method = aws_api_gateway_method.post_method.http_method
+  type                    = "MOCK"
+
+  request_templates = {
+    "multipart/form-data" = "{ statusCode: 200 }"
+    "application/json"    = "{\"statusCode\": 200}"
+  }
+}
+
+resource "aws_api_gateway_method_response" "post_method" {
+  rest_api_id = aws_api_gateway_rest_api.new_hotel_api.id
+  resource_id = aws_api_gateway_rest_api.new_hotel_api.root_resource_id
+  http_method = aws_api_gateway_method.post_method.http_method
+  status_code = "200"
+
+  response_models = {
+    "application/json" = "Empty"
+  }
+
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Origin" = true
+  }
+}
+
+resource "aws_api_gateway_integration_response" "post_method" {
+  rest_api_id = aws_api_gateway_rest_api.new_hotel_api.id
+  resource_id = aws_api_gateway_rest_api.new_hotel_api.root_resource_id
+  http_method = aws_api_gateway_method.post_method.http_method
+  status_code = aws_api_gateway_method_response.post_method.status_code
+
+  response_templates = {
+    "application/json" = ""
+  }
+
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Origin" = "'*'"
+  }
+}
+
+module "cors" {
+  source  = "squidfunk/api-gateway-enable-cors/aws"
+  version = "0.3.3"
+
+  api_id          = aws_api_gateway_rest_api.new_hotel_api.id
+  api_resource_id = aws_api_gateway_rest_api.new_hotel_api.root_resource_id
+}
+
+resource "aws_api_gateway_deployment" "new_hotel_api" {
+  rest_api_id = aws_api_gateway_rest_api.new_hotel_api.id
+
+  depends_on = [
+    aws_api_gateway_method.post_method,
+    aws_api_gateway_integration.post_method,
+  ]
+
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+
+resource "aws_api_gateway_stage" "new_hotel_api" {
+  deployment_id = aws_api_gateway_deployment.new_hotel_api.id
+  rest_api_id   = aws_api_gateway_rest_api.new_hotel_api.id
+  stage_name    = "Test"
 }
