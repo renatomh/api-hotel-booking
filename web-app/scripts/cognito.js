@@ -1,8 +1,8 @@
 const config={
     cognito:{
-        identityPoolId:"us-east-2_HnW5ZqXHB",
+        identityPoolId:"us-east-2_Y11TjgneA",
         cognitoDomain:"hotel-booking-users.auth.us-east-2.amazoncognito.com",
-        appId:"1oi2groki3stuatu3kddetns2u"
+        appId:"4nnkvjbsasv8qur5d4ij0g497r"
     }
 }
 

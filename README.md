@@ -21,7 +21,35 @@ During the development of this project, the following techologies were used:
 
 ## 💻 Project Configuration
 
-First, ...
+After creating the required AWS infrastructure resources, you must update the following lines at [cognito.js](./web-app/scripts/cognito.js) with the Cognito's created service data, as well as the redirect callback and sign out URLs to your application's URL:
+
+```javascript
+const config={
+    cognito:{
+        identityPoolId:"user_pool_id",
+        cognitoDomain:"cognito_domain",
+        appId:"app_client_id"
+    }
+}
+//...
+var cognitoApp={
+    //...
+    {
+        var authData = {
+            //...
+            RedirectUriSignIn : 'https://your-app.domain.com/',
+            RedirectUriSignOut : 'https://your-app.domain.com/',
+        };
+        //...
+    }
+}
+```
+
+You must also update the form action for [addHotel.html](./web-app/addHotel.html) with the API Gateway invoke url:
+
+```javascript
+action="invoke_url"
+```
 
 ## 🏗️ Infrastructure as Code (IaC) with Terraform
 

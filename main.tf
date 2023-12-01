@@ -184,11 +184,20 @@ resource "aws_api_gateway_rest_api" "new_hotel_api" {
   }
 }
 
+resource "aws_api_gateway_authorizer" "cognito_authorizer" {
+  name            = "NewHotelAuth"
+  rest_api_id     = aws_api_gateway_rest_api.new_hotel_api.id
+  type            = "COGNITO_USER_POOLS"
+  identity_source = "method.request.header.Authorization"
+  provider_arns   = [aws_cognito_user_pool.hotel_booking_users.arn]
+}
+
 resource "aws_api_gateway_method" "post_method" {
   rest_api_id   = aws_api_gateway_rest_api.new_hotel_api.id
   resource_id   = aws_api_gateway_rest_api.new_hotel_api.root_resource_id
   http_method   = "POST"
-  authorization = "NONE"
+  authorization = "COGNITO_USER_POOLS"
+  authorizer_id = aws_api_gateway_authorizer.cognito_authorizer.id
 }
 
 resource "aws_api_gateway_integration" "post_method" {
